@@ -27,5 +27,14 @@ pip install -r requirements.txt
 
 Instalación
 Clona este repositorio:
+git clone https://github.com/ocastelblack/api_rick_and_morty
+cd rick-and-tasks
 
+Crea la base de datos
+sqlite3 app.db < schema.sql
+
+Ejecuta la aplicación:
+python app.py
+
+Abre en tu navegador:
 http://127.0.0.1:5000/login
