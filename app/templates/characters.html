@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block title %}Personajes{% endblock %}
+
+{% block content %}
+<h2>Personajes de Rick & Morty</h2>
+
+<a href="{{ url_for('main.task_list') }}" class="btn btn-secondary mb-4">← Volver a mis tareas</a>
+
+<!-- Buscador -->
+<form method="get" class="d-flex mb-4">
+    <input type="text" name="name" placeholder="Buscar personaje..." value="{{ name }}" class="form-control me-2">
+    <input type="hidden" name="page" value="1">
+    <button type="submit" class="btn btn-primary">Buscar</button>
+</form>
+
+<div class="row">
+    {% for char in characters %}
+    <div class="col-md-3 mb-4">
+        <div class="card bg-dark text-white h-100">
+            <img src="{{ char.image }}" class="card-img-top" alt="{{ char.name }}">
+            <div class="card-body">
+                <h5 class="card-title">{{ char.name }}</h5>
+                <p class="card-text">{{ char.species }} - {{ char.status }}</p>
+
+                <form method="get" action="{{ url_for('main.assign_character', character_id=char.id) }}">
+                    <select name="task_id" class="form-select mt-2">
+                        {% for task in current_user.tasks %}
+                            <option value="{{ task.id }}">{{ task.title }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="btn btn-outline-success btn-sm mt-2">Asignar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Paginación -->
+<nav aria-label="Paginación">
+  <ul class="pagination justify-content-center">
+    {% if info.prev %}
+    <li class="page-item">
+      <a class="page-link" href="{{ url_for('main.characters', page=page-1, name=name) }}">Anterior</a>
+    </li>
+    {% endif %}
+    {% if info.next %}
+    <li class="page-item">
+      <a class="page-link" href="{{ url_for('main.characters', page=page+1, name=name) }}">Siguiente</a>
+    </li>
+    {% endif %}
+  </ul>
+</nav>
+{% endblock %}

@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block title %}Mis Tareas{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Mis Tareas</h2>
+
+<a href="{{ url_for('main.task_create') }}" class="btn btn-success mb-3">+ Nueva tarea</a>
+<a href="{{ url_for('main.characters') }}" class="btn btn-info mb-3 ms-2">Asociar personaje</a>
+
+<form method="get" class="d-flex mb-3">
+    <input type="text" name="q" placeholder="Buscar tarea..." value="{{ query }}" class="form-control me-2">
+    <button type="submit" class="btn btn-outline-light">Buscar</button>
+</form>
+
+<table class="table table-dark table-hover table-striped rounded">
+    <thead class="table-secondary text-dark">
+        <tr>
+            <th>Título</th>
+            <th>Personaje</th>
+            <th>Estado</th>
+            <th>Fecha</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for task in tasks %}
+        <tr>
+            <td>
+                <strong>{{ task.title }}</strong>
+            </td>
+            <td>
+                {% if task.character_id %}
+                    {% set char = characters_map.get(task.id) %}
+                    {% if char %}
+                        <img src="{{ char.image }}" alt="{{ char.name }}" width="40" height="40" class="rounded-circle me-2">
+                        <small>{{ char.name }}</small>
+                    {% else %}
+                        <small class="text-muted">No encontrado</small>
+                    {% endif %}
+                {% else %}
+                    <small class="text-muted">Sin personaje</small>
+                {% endif %}
+            </td>
+            <td>
+                {% if task.status == 'Completada' %}
+                    <span class="badge bg-success">{{ task.status }}</span>
+                {% elif task.status == 'En progreso' %}
+                    <span class="badge bg-warning text-dark">{{ task.status }}</span>
+                {% else %}
+                    <span class="badge bg-secondary">{{ task.status }}</span>
+                {% endif %}
+            </td>
+            <td>{{ task.due_date.strftime('%d/%m/%Y') if task.due_date else '—' }}</td>
+            <td class="text-nowrap">
+                <a href="{{ url_for('main.task_edit', task_id=task.id) }}"
+                   class="btn btn-sm btn-outline-primary me-1"
+                   title="Editar">
+                    <i class="bi bi-pencil-square"></i>
+                </a>
+                <a href="{{ url_for('main.task_delete', task_id=task.id) }}"
+                   class="btn btn-sm btn-outline-danger"
+                   title="Eliminar"
+                   onclick="return confirm('¿Seguro que deseas eliminar esta tarea?');">
+                    <i class="bi bi-trash-fill"></i>
+                </a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% if not tasks %}
+    <div class="alert alert-info mt-3">No tienes tareas registradas aún. ¡Empieza creando una!</div>
+{% endif %}
+
+{% endblock %}

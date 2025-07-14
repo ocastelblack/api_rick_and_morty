@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Editar' if edit else 'Crear' }} Tarea{% endblock %}
+{% block content %}
+<h2>{{ 'Editar' if edit else 'Crear' }} Tarea</h2>
+<form method="POST" id="taskForm">
+    {{ form.hidden_tag() }}
+
+    <div class="mb-3">
+        {{ form.title.label }}
+        {{ form.title(class="form-control", placeholder="Título") }}
+        {% for error in form.title.errors %}
+            <div class="text-danger">{{ error }}</div>
+        {% endfor %}
+    </div>
+
+    <div class="mb-3">
+        {{ form.description.label }}
+        {{ form.description(class="form-control", placeholder="Descripción") }}
+        {% for error in form.description.errors %}
+            <div class="text-danger">{{ error }}</div>
+        {% endfor %}
+    </div>
+
+    <div class="mb-3">
+        {{ form.due_date.label }}
+        {{ form.due_date(class="form-control") }}
+        {% for error in form.due_date.errors %}
+            <div class="text-danger">{{ error }}</div>
+        {% endfor %}
+    </div>
+
+    <div class="mb-3">
+        {{ form.status.label }}
+        {{ form.status(class="form-select") }}
+    </div>
+
+    {{ form.character_id(type="hidden", id="character_id") }}
+
+    <div class="mb-3">
+        <label for="character_id">Personaje asignado</label>
+        <div id="selected-character" class="mt-2">
+            {% if character %}
+                <img src="{{ character.image }}" alt="{{ character.name }}" width="80" class="rounded mb-1"><br>
+                <strong>{{ character.name }}</strong>
+            {% else %}
+                <p class="text-muted">Ningún personaje asignado.</p>
+            {% endif %}
+        </div>
+        <button type="button" class="btn btn-outline-info mt-2" data-bs-toggle="modal" data-bs-target="#characterModal">
+            Elegir personaje
+        </button>
+    </div>
+
+    {{ form.submit(class="btn btn-primary") }}
+</form>
+
+<a href="{{ url_for('main.task_list') }}" class="btn btn-secondary mt-2">Volver</a>
+
+<!-- MODAL DE PERSONAJES -->
+<div class="modal fade" id="characterModal" tabindex="-1" aria-labelledby="characterModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content bg-dark text-light">
+      <div class="modal-header">
+        <h5 class="modal-title" id="characterModalLabel">Seleccionar personaje</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <!-- Buscador -->
+        <form class="d-flex mb-4" onsubmit="event.preventDefault(); loadCharacters(1);">
+          <input type="text" id="searchInput" class="form-control me-2" placeholder="Buscar personaje por nombre...">
+          <button type="submit" class="btn btn-primary">Buscar</button>
+        </form>
+
+        <!-- Contenedor de personajes -->
+        <div class="row" id="character-container"></div>
+
+        <!-- Paginación -->
+        <nav class="mt-4">
+          <ul class="pagination justify-content-center" id="pagination"></ul>
+        </nav>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Bootstrap & JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+let currentPage = 1;
+
+function loadCharacters(page = 1) {
+    const name = document.getElementById('searchInput').value;
+    const url = `https://rickandmortyapi.com/api/character/?page=${page}&name=${encodeURIComponent(name)}`;
+
+    fetch(url)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Sin resultados');
+            }
+            return response.json();
+        })
+        .then(data => {
+            const container = document.getElementById('character-container');
+            container.innerHTML = '';
+            data.results.forEach(character => {
+                container.innerHTML += `
+                <div class="col-md-3 mb-3">
+                    <div class="card bg-secondary text-white h-100">
+                        <img src="${character.image}" class="card-img-top">
+                        <div class="card-body">
+                            <h6>${character.name}</h6>
+                            <p class="small">${character.species} - ${character.status}</p>
+                            <button class="btn btn-sm btn-outline-light" onclick="selectCharacter(${character.id}, '${character.name}', '${character.image}')">Seleccionar</button>
+                        </div>
+                    </div>
+                </div>`;
+            });
+
+            // Paginación
+            const pagination = document.getElementById('pagination');
+            pagination.innerHTML = '';
+            if (data.info.prev) {
+                pagination.innerHTML += `<li class="page-item"><a class="page-link" href="#" onclick="loadCharacters(${page - 1})">Anterior</a></li>`;
+            }
+            if (data.info.next) {
+                pagination.innerHTML += `<li class="page-item"><a class="page-link" href="#" onclick="loadCharacters(${page + 1})">Siguiente</a></li>`;
+            }
+
+            currentPage = page;
+        })
+        .catch(err => {
+            document.getElementById('character-container').innerHTML = `<p class="text-warning">No se encontraron personajes.</p>`;
+            document.getElementById('pagination').innerHTML = '';
+        });
+}
+
+function selectCharacter(id, name, image) {
+    document.getElementById('character_id').value = id;
+    document.getElementById('selected-character').innerHTML = `
+        <img src="${image}" width="80" class="rounded mb-1"><br>
+        <strong>${name}</strong>`;
+    const modal = bootstrap.Modal.getInstance(document.getElementById('characterModal'));
+    modal.hide();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadCharacters(currentPage);
+});
+</script>
+{% endblock %}
